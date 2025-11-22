@@ -7,6 +7,8 @@ import type {
   Contratto,
   ScadenzaIncasso,
   Fattura,
+  VoceCosto,
+  Spesa,
 } from "@/types";
 
 // Mock data storage (in-memory)
@@ -56,6 +58,8 @@ let impianti: Impianto[] = [
     denominazione: "Impianto Centrale",
     indirizzo: "Via Industria 10, Milano",
     libero: false,
+    latitudine: 45.4642,
+    longitudine: 9.1900,
   },
   {
     id: 2,
@@ -63,6 +67,8 @@ let impianti: Impianto[] = [
     denominazione: "Impianto Nord",
     indirizzo: "Via Nord 20, Torino",
     libero: true,
+    latitudine: 45.0703,
+    longitudine: 7.6869,
   },
 ];
 
@@ -101,6 +107,30 @@ let scadenzeIncasso: ScadenzaIncasso[] = [
 ];
 
 let fatture: Fattura[] = [];
+
+let vociCosto: VoceCosto[] = [
+  { id: 1, descrizione: "Manutenzione" },
+  { id: 2, descrizione: "Materiali" },
+  { id: 3, descrizione: "Personale" },
+  { id: 4, descrizione: "Utenze" },
+];
+
+let spese: Spesa[] = [
+  {
+    id: 1,
+    voceCosto: 1,
+    descrizione: "Riparazione impianto centrale",
+    dataSpesa: "2024-01-15",
+    importoSpesa: 500.0,
+  },
+  {
+    id: 2,
+    voceCosto: 2,
+    descrizione: "Acquisto materiali di consumo",
+    dataSpesa: "2024-02-10",
+    importoSpesa: 250.0,
+  },
+];
 
 // Helper functions to get next ID
 function getNextId(items: { id: number }[]): number {
@@ -316,6 +346,56 @@ export const fatturaAPI = {
     const index = fatture.findIndex((f) => f.id === id);
     if (index === -1) throw new Error("Not found");
     fatture.splice(index, 1);
+  },
+};
+
+// API functions for VoceCosto
+export const voceCostoAPI = {
+  getAll: () => [...vociCosto],
+  getById: (id: number) => vociCosto.find((v) => v.id === id),
+  create: (data: Omit<VoceCosto, "id">) => {
+    const newItem: VoceCosto = {
+      id: getNextId(vociCosto),
+      ...data,
+    };
+    vociCosto.push(newItem);
+    return newItem;
+  },
+  update: (id: number, data: Partial<VoceCosto>) => {
+    const index = vociCosto.findIndex((v) => v.id === id);
+    if (index === -1) throw new Error("Not found");
+    vociCosto[index] = { ...vociCosto[index], ...data };
+    return vociCosto[index];
+  },
+  delete: (id: number) => {
+    const index = vociCosto.findIndex((v) => v.id === id);
+    if (index === -1) throw new Error("Not found");
+    vociCosto.splice(index, 1);
+  },
+};
+
+// API functions for Spesa
+export const spesaAPI = {
+  getAll: () => [...spese],
+  getById: (id: number) => spese.find((s) => s.id === id),
+  create: (data: Omit<Spesa, "id">) => {
+    const newItem: Spesa = {
+      id: getNextId(spese),
+      ...data,
+    };
+    spese.push(newItem);
+    return newItem;
+  },
+  update: (id: number, data: Partial<Spesa>) => {
+    const index = spese.findIndex((s) => s.id === id);
+    if (index === -1) throw new Error("Not found");
+    spese[index] = { ...spese[index], ...data };
+    return spese[index];
+  },
+  delete: (id: number) => {
+    const index = spese.findIndex((s) => s.id === id);
+    if (index === -1) throw new Error("Not found");
+    spese.splice(index, 1);
   },
 };
 

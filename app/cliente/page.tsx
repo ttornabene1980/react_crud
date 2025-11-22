@@ -137,7 +137,7 @@ export default function ClientePage() {
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-8xl">
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>{editing ? "Edit" : "Create"} Cliente</DialogTitle>

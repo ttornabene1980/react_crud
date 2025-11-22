@@ -12,6 +12,8 @@ const menuItems = [
   { name: "Cliente", href: "/cliente" },
   { name: "Impianto", href: "/impianto" },
   { name: "Contratto", href: "/contratto" },
+  { name: "Voce Costo", href: "/voce-costo" },
+  { name: "Spesa", href: "/spesa" },
 ];
 
 export function Navigation() {

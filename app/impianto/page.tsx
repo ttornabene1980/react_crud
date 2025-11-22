@@ -15,8 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { impiantoAPI } from "@/lib/mock-data";
+import { geocodeAddress } from "@/lib/geocoding";
+import { Map } from "@/components/map";
 import type { Impianto } from "@/types";
-import { Plus } from "lucide-react";
+import { Plus, MapPin, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,12 +28,15 @@ const schema = z.object({
   denominazione: z.string().min(1, "Denominazione is required"),
   indirizzo: z.string(),
   libero: z.boolean(),
+  latitudine: z.number().optional(),
+  longitudine: z.number().optional(),
 });
 
 export default function ImpiantoPage() {
   const [data, setData] = React.useState<Impianto[]>([]);
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Impianto | null>(null);
+  const [geocoding, setGeocoding] = React.useState(false);
 
   const form = useForm<Impianto>({
     resolver: zodResolver(schema),
@@ -41,6 +46,8 @@ export default function ImpiantoPage() {
       denominazione: "",
       indirizzo: "",
       libero: false,
+      latitudine: undefined,
+      longitudine: undefined,
     },
   });
 
@@ -64,6 +71,8 @@ export default function ImpiantoPage() {
         denominazione: "",
         indirizzo: "",
         libero: false,
+        latitudine: undefined,
+        longitudine: undefined,
       });
     }
     setOpen(true);
@@ -73,13 +82,46 @@ export default function ImpiantoPage() {
     setOpen(false);
     setEditing(null);
     form.reset();
+    setGeocoding(false);
+  };
+
+  const handleGeocode = async () => {
+    const address = form.watch("indirizzo");
+    if (!address || address.trim() === "") {
+      alert("Please enter an address first");
+      return;
+    }
+
+    setGeocoding(true);
+    try {
+      const result = await geocodeAddress(address);
+      if (result) {
+        form.setValue("latitudine", result.lat);
+        form.setValue("longitudine", result.lon);
+      } else {
+        alert("Could not find coordinates for this address. Please check the address and try again.");
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      alert("Error geocoding address. Please try again.");
+    } finally {
+      setGeocoding(false);
+    }
   };
 
   const onSubmit = (values: Impianto) => {
+    // Ensure we get all form values including coordinates set programmatically
+    const allValues = form.getValues();
+    const dataToSave: Impianto = {
+      ...values,
+      latitudine: allValues.latitudine,
+      longitudine: allValues.longitudine,
+    };
+    
     if (editing) {
-      impiantoAPI.update(editing.id, values);
+      impiantoAPI.update(editing.id, dataToSave);
     } else {
-      impiantoAPI.create(values);
+      impiantoAPI.create(dataToSave);
     }
     loadData();
     handleCloseDialog();
@@ -160,13 +202,51 @@ export default function ImpiantoPage() {
                 )}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="indirizzo">Indirizzo</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="indirizzo" className="flex-1">Indirizzo</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGeocode}
+                    disabled={geocoding || !form.watch("indirizzo")}
+                  >
+                    {geocoding ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Geocoding...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="mr-2 h-4 w-4" />
+                        Get Coordinates
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <Input
                   id="indirizzo"
                   {...form.register("indirizzo")}
                   placeholder="Enter indirizzo"
                 />
+                {(form.watch("latitudine") && form.watch("longitudine")) && (
+                  <div className="text-sm text-muted-foreground">
+                    Coordinates: {form.watch("latitudine")?.toFixed(6)}, {form.watch("longitudine")?.toFixed(6)}
+                  </div>
+                )}
               </div>
+              {form.watch("latitudine") && form.watch("longitudine") && (
+                <div className="grid gap-2">
+                  <Label>Map</Label>
+                  <Map
+                    key={`${form.watch("latitudine")}-${form.watch("longitudine")}`}
+                    latitude={form.watch("latitudine")!}
+                    longitude={form.watch("longitudine")!}
+                    address={form.watch("indirizzo")}
+                    height="300px"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="libero"

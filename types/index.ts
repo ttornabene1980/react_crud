@@ -31,6 +31,8 @@ export interface Impianto {
   denominazione: string;
   indirizzo: string;
   libero: boolean;
+  latitudine?: number;
+  longitudine?: number;
 }
 
 export interface Contratto {
@@ -65,5 +67,18 @@ export interface Fattura {
   tipoPagamento: string; // FK to TipoPagamento.id
   importoFatturato: number;
   iva: number;
+}
+
+export interface VoceCosto {
+  id: number;
+  descrizione: string;
+}
+
+export interface Spesa {
+  id: number;
+  voceCosto: number; // FK to VoceCosto.id
+  descrizione: string;
+  dataSpesa: string; // date as string
+  importoSpesa: number;
 }
 
