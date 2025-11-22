@@ -17,8 +17,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { impiantoAPI } from "@/lib/mock-data";
 import { geocodeAddress } from "@/lib/geocoding";
 import { Map } from "@/components/map";
+import { ImpiantiMap } from "@/components/impianti-map";
 import type { Impianto } from "@/types";
-import { Plus, MapPin, Loader2 } from "lucide-react";
+import { Plus, MapPin, Loader2, List, Map as MapIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,6 +38,7 @@ export default function ImpiantoPage() {
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Impianto | null>(null);
   const [geocoding, setGeocoding] = React.useState(false);
+  const [viewMode, setViewMode] = React.useState<"list" | "map">("list");
 
   const form = useForm<Impianto>({
     resolver: zodResolver(schema),
@@ -146,22 +148,58 @@ export default function ImpiantoPage() {
     },
   ];
 
+  const handleMarkerClick = (impianto: Impianto) => {
+    setEditing(impianto);
+    form.reset(impianto);
+    setOpen(true);
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Impianto</h1>
-        <Button onClick={() => handleOpenDialog()}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New
-        </Button>
+        <div className="flex gap-2">
+          <div className="flex border rounded-md">
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-r-none"
+            >
+              <List className="mr-2 h-4 w-4" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === "map" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("map")}
+              className="rounded-l-none"
+            >
+              <MapIcon className="mr-2 h-4 w-4" />
+              Map
+            </Button>
+          </div>
+          <Button onClick={() => handleOpenDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New
+          </Button>
+        </div>
       </div>
 
-      <DataTable
-        data={data}
-        columns={columns}
-        onEdit={handleOpenDialog}
-        onDelete={handleDelete}
-      />
+      {viewMode === "list" ? (
+        <DataTable
+          data={data}
+          columns={columns}
+          onEdit={handleOpenDialog}
+          onDelete={handleDelete}
+        />
+      ) : (
+        <ImpiantiMap
+          impianti={data}
+          onMarkerClick={handleMarkerClick}
+          height="600px"
+        />
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

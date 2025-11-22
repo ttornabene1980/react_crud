@@ -94,7 +94,25 @@ Ref: "Fattura"."contratto" > "Contratto"."id"
 7. Column filter: dropdown with unique values from selected column
 
 
-  
+After Step 
+
+
+Updating all dialogs to max-w-8xl. Adding it to the Tailwind config, then updating the dialogs.
+
+
+Indirizzo
+Get Coordinates update coordiante but dont change map marker
+
+
+Aggiunte le nuove entità VoceCosto e Spesa seguendo la stessa logica del progetto.
+
+For Impianto entity list add view map with list impianti in map and click in market detail edit impianto
+
+
+Create a DASHBOARD summary with chart and mese/contratti mese_anno/vocispesa to all importo scadenze fatturati pagati speseEffettuate 
+
+
+
 
 
 

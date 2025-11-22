@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { name: "Home", href: "/" },
+  { name: "Dashboard", href: "/dashboard" },
   { name: "Cliente Tipo", href: "/cliente-tipo" },
   { name: "Tipo Pagamento", href: "/tipo-pagamento" },
   { name: "Tipo Fatturazione", href: "/tipo-fatturazione" },
