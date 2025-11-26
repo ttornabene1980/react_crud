@@ -29,11 +29,12 @@ import type {
   ScadenzaIncasso,
   Fattura,
 } from "@/types";
-import { Plus } from "lucide-react";
+import { Plus, Wand2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Autocomplete } from "@/components/autocomplete";
+import { calculateDataFine, generateScadenzeIncasso } from "@/lib/contratto-utils";
 
 const schema = z.object({
   cliente: z.number().min(1, "Cliente is required"),
@@ -87,6 +88,21 @@ export default function ContrattoPage() {
       setFatture([]);
     }
   }, [editing]);
+
+  // Auto-calculate dataFine when dataInizio or durataMese changes
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if ((name === "dataInizio" || name === "durataMese") && value.dataInizio && value.durataMese) {
+        try {
+          const calculatedDataFine = calculateDataFine(value.dataInizio, value.durataMese);
+          form.setValue("dataFine", calculatedDataFine);
+        } catch (error) {
+          console.error("Error calculating dataFine:", error);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const loadData = () => {
     setData(contrattoAPI.getAll());
@@ -237,6 +253,32 @@ export default function ContrattoPage() {
   const handleDeleteScadenzaIncasso = (index: number) => {
     const updated = scadenzeIncasso.filter((_, i) => i !== index);
     setScadenzeIncasso(updated);
+  };
+
+  const handleGenerateScadenze = () => {
+    const formValues = form.getValues();
+
+    // Validate required fields
+    if (!formValues.dataInizio || !formValues.dataFine || !formValues.durataMese ||
+        !formValues.tipoFatturazione || !formValues.importoContratto || !formValues.tipoPagamento) {
+      alert("Please fill in all contract fields before generating payment schedules (Data Inizio, Data Fine, Durata, Tipo Fatturazione, Importo Contratto, Tipo Pagamento)");
+      return;
+    }
+
+    const contrattoData: Contratto = {
+      ...formValues,
+      id: editing?.id || 0,
+    };
+
+    const generatedScadenze = generateScadenzeIncasso(contrattoData);
+
+    // Convert to ScadenzaIncasso format with temporary IDs
+    const newScadenze: ScadenzaIncasso[] = generatedScadenze.map((s) => ({
+      id: 0, // Will be assigned on save
+      ...s,
+    }));
+
+    setScadenzeIncasso(newScadenze);
   };
 
   const handleAddFattura = () => {
@@ -495,11 +537,17 @@ export default function ContrattoPage() {
                   )}
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="dataFine">Data Fine *</Label>
+                  <Label htmlFor="dataFine" className="flex items-center gap-2">
+                    Data Fine *
+                    <span className="text-xs text-muted-foreground font-normal">
+                      (Auto-calculated)
+                    </span>
+                  </Label>
                   <Input
                     id="dataFine"
                     type="date"
                     {...form.register("dataFine")}
+                    className="bg-muted/50"
                   />
                   {form.formState.errors.dataFine && (
                     <p className="text-sm text-destructive">
@@ -552,6 +600,19 @@ export default function ContrattoPage() {
               </div>
 
               <div className="mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-lg font-semibold">Scadenze Incasso</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateScadenze}
+                    className="gap-2"
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    Auto-Generate Schedules
+                  </Button>
+                </div>
                 <InlineTable
                   title="Scadenze Incasso"
                   data={scadenzeIncasso}
